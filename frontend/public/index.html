@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; padding: 50px 20px; text-align: center; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin: 20px 0; }
+        h1 { color: white; font-size: 2.5em; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .nav-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin: 30px 0; }
+        .nav-btn { 
+            background: #007acc; color: white; text-decoration: none; padding: 15px 30px; 
+            border-radius: 5px; font-size: 16px; font-weight: bold; transition: all 0.3s ease;
+            display: inline-block; min-width: 150px;
+        }
+        .nav-btn:hover { background: #005999; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .feature { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+        .status { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏨 Hotel Management System</h1>
+	<div class="nav-buttons">
+	    <a href="login.html" class="nav-btn">🏨 Guest Check-In</a>
+	    <a href="admin.html" class="nav-btn">⚙️ Inn Management</a>
+	</div>
+        <div class="card">
+            <h2>Welcome to Your Hotel Management System</h2>
+            <p>Complete booking and loyalty management solution with real-time analytics</p>
+            
+            <div class="nav-buttons">
+                <a href="booking.html" class="nav-btn">🎯 Customer Booking</a>
+                <a href="admin.html" class="nav-btn">⚙️ Admin Panel</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>System Features</h3>
+            <div class="feature">
+                <strong>🎯 Customer Booking System:</strong> Complete booking workflow with loyalty points calculation
+            </div>
+            <div class="feature">
+                <strong>📊 Analytics Reports:</strong> Customer loyalty analysis and booking performance metrics
+            </div>
+            <div class="feature">
+                <strong>⚙️ Admin Management:</strong> Database management and data import functionality
+            </div>
+            <div class="feature">
+                <strong>🏨 Room Management:</strong> Availability checking and pricing calculation
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>System Status</h3>
+            <div id="systemStatus" class="status">Checking system status...</div>
+            <button onclick="checkSystemHealth()" class="nav-btn">🔄 Refresh Status</button>
+        </div>
+    </div>
+
+    <script>
+        function checkSystemHealth() {
+            document.getElementById('systemStatus').innerHTML = '⏳ Checking...';
+            
+            Promise.all([
+                fetch('http://localhost:3000/api/health').then(r => r.json()),
+                fetch('http://localhost:3000/api/customers').then(r => r.json())
+            ])
+            .then(([health, customers]) => {
+                document.getElementById('systemStatus').innerHTML = `
+                    <div style="color: #28a745;">
+                        ✅ <strong>System Online</strong><br>
+                        API Status: ${health.status}<br>
+                        Database: Connected<br>
+                        Customers in system: ${customers.length}
+                    </div>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('systemStatus').innerHTML = `
+                    <div style="color: #dc3545;">
+                        ❌ <strong>System Error</strong><br>
+                        Please check if all services are running<br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            });
+        }
+        
+        // Check status on load
+        window.onload = checkSystemHealth;
+    </script>
+</body>
+</html>

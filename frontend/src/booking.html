@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hotel Booking System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007acc; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; margin: 10px 5px; }
+        button:hover { background: #005999; }
+        .booking-summary { background: #e8f4fd; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .success { color: #28a745; } .error { color: #dc3545; }
+        .customer-select { background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏨 Hotel Booking System</h1>
+        
+        <!-- Customer Selection (avoiding excessive ID usage) -->
+        <div class="customer-select">
+            <h3>Select Customer</h3>
+            <select id="customerSelect" onchange="loadCustomerInfo()">
+                <option value="">-- Select Customer --</option>
+            </select>
+            <div id="customerInfo"></div>
+        </div>
+
+        <!-- Booking Form -->
+        <form id="bookingForm">
+            <div class="form-group">
+                <label>Check-in Date:</label>
+                <input type="date" id="checkinDate" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Check-out Date:</label>
+                <input type="date" id="checkoutDate" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Room Type:</label>
+                <select id="roomSelect" onchange="calculatePrice()">
+                    <option value="">-- Select Room --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Additional Services:</label>
+                <div id="servicesContainer"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Special Requests:</label>
+                <textarea id="specialRequest" rows="3" placeholder="Any special requests..."></textarea>
+            </div>
+            
+            <div class="booking-summary" id="bookingSummary" style="display: none;">
+                <h3>📋 Booking Summary</h3>
+                <div id="summaryContent"></div>
+            </div>
+            
+            <button type="button" onclick="createBooking()">🎯 Create Booking</button>
+            <button type="button" onclick="viewAnalytics()">📊 View Analytics Report</button>
+        </form>
+        
+        <div id="result"></div>
+        <div id="analytics"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let selectedCustomer = null;
+        let availableRooms = [];
+        let availableServices = [];
+
+        // Load initial data
+        window.onload = function() {
+            loadCustomers();
+            loadServices();
+        };
+
+        function loadCustomers() {
+            fetch(`${API_BASE}/customers`)
+            .then(response => response.json())
+            .then(customers => {
+                const select = document.getElementById('customerSelect');
+                customers.forEach(customer => {
+                    const option = document.createElement('option');
+                    option.value = customer.CustomerID;
+                    option.textContent = `${customer.Username} (${customer.Loyalty_status} - ${customer.Points} points)`;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function loadCustomerInfo() {
+            const customerId = document.getElementById('customerSelect').value;
+            if (!customerId) return;
+
+            fetch(`${API_BASE}/customers/${customerId}`)
+            .then(response => response.json())
+            .then(customer => {
+                selectedCustomer = customer;
+                document.getElementById('customerInfo').innerHTML = `
+                    <p><strong>Email:</strong> ${customer.Email}</p>
+                    <p><strong>Loyalty Status:</strong> ${customer.Loyalty_status}</p>
+                    <p><strong>Current Points:</strong> ${customer.Points}</p>
+                    <p><strong>Pending Points:</strong> ${customer.Pending_points}</p>
+                `;
+                loadAvailableRooms();
+            });
+        }
+
+        function loadAvailableRooms() {
+            const checkin = document.getElementById('checkinDate').value;
+            const checkout = document.getElementById('checkoutDate').value;
+            
+            if (!checkin || !checkout) {
+                // Load all rooms if no dates selected
+                fetch(`${API_BASE}/rooms`)
+                .then(response => response.json())
+                .then(rooms => {
+                    populateRoomSelect(rooms);
+                });
+                return;
+            }
+
+            // Check availability for specific dates
+            fetch(`${API_BASE}/rooms/available?checkin=${checkin}&checkout=${checkout}`)
+            .then(response => response.json())
+            .then(rooms => {
+                populateRoomSelect(rooms);
+            });
+        }
+
+        function populateRoomSelect(rooms) {
+            const select = document.getElementById('roomSelect');
+            select.innerHTML = '<option value="">-- Select Room --</option>';
+            
+            rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.RoomID;
+                option.textContent = `${room.Room_type} - €${room.Price}/night (Capacity: ${room.Capacity})`;
+                option.dataset.price = room.Price;
+                select.appendChild(option);
+            });
+            availableRooms = rooms;
+        }
+
+        function loadServices() {
+            fetch(`${API_BASE}/services`)
+            .then(response => response.json())
+            .then(services => {
+                const container = document.getElementById('servicesContainer');
+                services.forEach(service => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <label>
+                            <input type="checkbox" value="${service.ServiceID}" data-price="${service.Price_per_unit}">
+                            ${service.Label} - €${service.Price_per_unit} 
+                            <input type="number" min="1" value="1" style="width: 60px;" onchange="calculatePrice()">
+                        </label>
+                    `;
+                    container.appendChild(div);
+                });
+                availableServices = services;
+            });
+        }
+
+        function calculatePrice() {
+            const checkin = new Date(document.getElementById('checkinDate').value);
+            const checkout = new Date(document.getElementById('checkoutDate').value);
+            const roomSelect = document.getElementById('roomSelect');
+            
+            if (!checkin || !checkout || !roomSelect.value) return;
+
+            const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+            const roomPrice = parseFloat(roomSelect.selectedOptions[0]?.dataset.price || 0);
+            let roomTotal = roomPrice * nights;
+
+            // Calculate services
+            let servicesTotal = 0;
+            const serviceCheckboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]:checked');
+            serviceCheckboxes.forEach(checkbox => {
+                const quantity = checkbox.parentElement.querySelector('input[type="number"]').value;
+                servicesTotal += parseFloat(checkbox.dataset.price) * parseInt(quantity);
+            });
+
+            const total = roomTotal + servicesTotal;
+            const loyaltyPoints = Math.floor(total / 10); // 1 point per €10
+
+            document.getElementById('bookingSummary').style.display = 'block';
+            document.getElementById('summaryContent').innerHTML = `
+                <p><strong>Room:</strong> ${roomSelect.selectedOptions[0]?.textContent}</p>
+                <p><strong>Duration:</strong> ${nights} nights</p>
+                <p><strong>Room Total:</strong> €${roomTotal.toFixed(2)}</p>
+                <p><strong>Services Total:</strong> €${servicesTotal.toFixed(2)}</p>
+                <p><strong>Grand Total:</strong> €${total.toFixed(2)}</p>
+                <p><strong>Loyalty Points to Earn:</strong> ${loyaltyPoints} points</p>
+            `;
+        }
+
+        function createBooking() {
+            if (!selectedCustomer) {
+                alert('Please select a customer first');
+                return;
+            }
+
+            const checkin = document.getElementById('checkinDate').value;
+            const checkout = document.getElementById('checkoutDate').value;
+            const roomId = document.getElementById('roomSelect').value;
+            const specialRequest = document.getElementById('specialRequest').value;
+
+            if (!checkin || !checkout || !roomId) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            // Collect selected services
+            const services = [];
+            const serviceCheckboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]:checked');
+            serviceCheckboxes.forEach(checkbox => {
+                const quantity = checkbox.parentElement.querySelector('input[type="number"]').value;
+                services.push({
+                    serviceId: parseInt(checkbox.value),
+                    quantity: parseInt(quantity)
+                });
+            });
+
+            const bookingData = {
+                customerId: selectedCustomer.CustomerID,
+                checkinDate: checkin,
+                checkoutDate: checkout,
+                roomId: parseInt(roomId),
+                specialRequest: specialRequest,
+                services: services
+            };
+
+            fetch(`${API_BASE}/create-booking`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingData)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="success">
+                            <h3>✅ Booking Created Successfully!</h3>
+                            <p>Booking ID: ${result.bookingId}</p>
+                            <p>Total Amount: €${result.totalAmount}</p>
+                            <p>Loyalty Points Earned: ${result.loyaltyPoints}</p>
+                            <p>Customer's new pending points: ${result.newPendingPoints}</p>
+                        </div>
+                    `;
+                    // Refresh customer info
+                    loadCustomerInfo();
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <div class="error">❌ Error: ${result.message}</div>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `
+                    <div class="error">❌ Connection error: ${error}</div>
+                `;
+            });
+        }
+
+        function viewAnalytics() {
+            fetch(`${API_BASE}/analytics/customer-loyalty`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '<h3>📊 Customer Loyalty Analytics Report</h3>';
+                html += '<table border="1" style="width: 100%; border-collapse: collapse;"><tr><th>Customer</th><th>Email</th><th>Loyalty Status</th><th>Total Bookings</th><th>Total Spent</th><th>Current Points</th></tr>';
+                
+                data.forEach(customer => {
+                    html += `<tr>
+                        <td>${customer.Username}</td>
+                        <td>${customer.Email}</td>
+                        <td>${customer.Loyalty_status}</td>
+                        <td>${customer.total_bookings}</td>
+                        <td>€${customer.total_spent}</td>
+                        <td>${customer.Points}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                
+                document.getElementById('analytics').innerHTML = html;
+            });
+        }
+
+        // Auto-calculate when dates change
+        document.getElementById('checkinDate').addEventListener('change', function() {
+            loadAvailableRooms();
+            calculatePrice();
+        });
+        document.getElementById('checkoutDate').addEventListener('change', function() {
+            loadAvailableRooms();
+            calculatePrice();
+        });
+    </script>
+</body>
+</html>

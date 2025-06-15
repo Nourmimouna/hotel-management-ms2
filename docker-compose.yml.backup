@@ -1,0 +1,70 @@
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: hotel_mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword123
+      MYSQL_DATABASE: hotel_management
+      MYSQL_USER: hotel_user
+      MYSQL_PASSWORD: hotel_user_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - hotel_network
+
+
+  backend:
+    build: ./backend
+    container_name: hotel_backend
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_NAME: hotel_management
+      DB_USER: hotel_user
+      DB_PASSWORD: hotel_user_pass
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mariadb
+    # Remove the health check dependency
+    networks:
+      - hotel_network
+
+  frontend:
+    build: ./frontend
+    container_name: hotel_frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - hotel_network
+
+
+
+
+mongodb:
+  image: mongo:7.0
+  container_name: hotel_mongodb
+  ports:
+    - "27017:27017"
+  volumes:
+    - mongodb_data:/data/db
+    - ./mongodb/init/init-mongo-simple.js:/docker-entrypoint-initdb.d/init-mongo-simple.js:ro
+  networks:
+    - hotel_network
+  # Remove all environment variables to disable auth
+volumes:
+  mariadb_data:
+    driver: local
+  mongodb_data:
+    driver: local
+
+
+networks:
+  hotel_network:
+    driver: bridge

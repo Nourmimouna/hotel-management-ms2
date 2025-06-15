@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hotel Management - Admin Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .admin-panel { background: #e8f4fd; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #007acc; }
+        button { 
+            background: #007acc; color: white; border: none; padding: 12px 24px; 
+            margin: 10px; border-radius: 4px; cursor: pointer; font-size: 16px; 
+        }
+        button:hover { background: #005999; }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hotel Management System - Admin Panel</h1>
+        
+        <div class="admin-panel">
+            <h2>Database Management</h2>
+            <button onclick="importData()">🔄 Import Sample Data</button>
+            <button onclick="viewBookings()">📊 View All Bookings</button>
+            <button onclick="viewCustomers()">👥 View Customers</button>
+            <div id="status"></div>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function importData() {
+            document.getElementById('status').innerHTML = '<p>⏳ Importing data...</p>';
+            
+            fetch(`${API_BASE}/import-data`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('status').innerHTML = 
+                        '<p class="success">✅ Sample data imported successfully!</p>';
+                } else {
+                    document.getElementById('status').innerHTML = 
+                        '<p class="error">❌ Error: ' + data.message + '</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerHTML = 
+                    '<p class="error">❌ Connection error: ' + error + '</p>';
+            });
+        }
+        
+        function viewBookings() {
+            fetch(`${API_BASE}/bookings`)
+            .then(response => response.json())
+            .then(bookings => {
+                let html = '<h3>📋 Current Bookings</h3>';
+                html += '<table><tr><th>Booking ID</th><th>Customer ID</th><th>Room ID</th><th>Check-in</th><th>Check-out</th><th>Total Amount</th><th>Status</th></tr>';
+                bookings.forEach(booking => {
+                    html += `<tr>
+                        <td>${booking.BookingID}</td>
+                        <td>${booking.CustomerID}</td>
+                        <td>${booking.RoomID}</td>
+                        <td>${booking.Check_in_date}</td>
+                        <td>${booking.Check_out_date}</td>
+                        <td>€${booking.Total_amount}</td>
+                        <td>${booking.Status}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('results').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = '<p class="error">Error loading bookings: ' + error + '</p>';
+            });
+        }
+        
+        function viewCustomers() {
+            fetch(`${API_BASE}/customers`)
+            .then(response => response.json())
+            .then(customers => {
+                let html = '<h3>👥 Customers and Loyalty Status</h3>';
+                html += '<table><tr><th>Customer ID</th><th>Username</th><th>Email</th><th>Loyalty Status</th><th>Points</th><th>Pending Points</th></tr>';
+                customers.forEach(customer => {
+                    html += `<tr>
+                        <td>${customer.CustomerID}</td>
+                        <td>${customer.Username}</td>
+                        <td>${customer.Email}</td>
+                        <td>${customer.Loyalty_status}</td>
+                        <td>${customer.Points}</td>
+                        <td>${customer.Pending_points}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('results').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = '<p class="error">Error loading customers: ' + error + '</p>';
+            });
+        }
+    </script>
+</body>
+</html>

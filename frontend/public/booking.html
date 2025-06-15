@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Dragonfly Inn - Room Reservations</title>
+    <style>
+        body { 
+            font-family: 'Georgia', serif; 
+            margin: 20px; 
+            background: linear-gradient(135deg, #8B4513 0%, #DEB887 30%, #F5DEB3 100%);
+            min-height: 100vh;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: rgba(255, 248, 240, 0.95); 
+            padding: 30px; 
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(139, 69, 19, 0.3);
+            border: 3px solid #DEB887;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Dragonfly Inn Header */
+        .inn-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(222, 184, 135, 0.2));
+            border-radius: 15px;
+            border: 2px solid #DEB887;
+        }
+        
+        .dragonfly-logo {
+            width: 80px;
+            height: 80px;
+            background-image: url('images/dragonfly-logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin-right: 20px;
+            animation: flutter 4s ease-in-out infinite;
+        }
+        
+        .inn-title-section h1 {
+            margin: 0;
+            color: #8B4513;
+            font-size: 2.8em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-family: 'Georgia', serif;
+        }
+        
+        .inn-subtitle {
+            color: #A0522D;
+            font-style: italic;
+            margin: 5px 0 0 0;
+            font-size: 1.2em;
+        }
+        
+        .location-tag {
+            color: #8B4513;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        @keyframes flutter {
+            0%, 100% { transform: rotate(-3deg) scale(1); }
+            50% { transform: rotate(3deg) scale(1.05); }
+        }
+        
+        /* Floating dragonfly in corner */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-image: url('images/dragonfly-logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 1000;
+            opacity: 0.6;
+            animation: flutter 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        .form-group { 
+            margin: 20px 0; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #8B4513;
+            font-family: 'Georgia', serif;
+        }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #DEB887; 
+            border-radius: 8px; 
+            background: rgba(255, 255, 255, 0.9);
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #CD853F;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 10px rgba(205, 133, 63, 0.3);
+        }
+        button { 
+            background: linear-gradient(45deg, #8B4513, #A0522D); 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 10px 5px; 
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover { 
+            background: linear-gradient(45deg, #A0522D, #8B4513); 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.4);
+        }
+        .booking-summary { 
+            background: rgba(255, 250, 205, 0.9); 
+            padding: 25px; 
+            border-radius: 15px; 
+            margin: 25px 0; 
+            border: 3px solid #DAA520;
+            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
+        }
+        .success { 
+            color: #228B22; 
+            font-weight: bold; 
+        }
+        .error { 
+            color: #8B0000; 
+            font-weight: bold; 
+        }
+        
+        /* Services styling */
+        #servicesContainer {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #DEB887;
+            border-radius: 8px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .service-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 250, 205, 0.8);
+            border-radius: 8px;
+            border: 1px solid #DEB887;
+            transition: all 0.3s ease;
+        }
+        
+        .service-item:hover {
+            background: rgba(255, 250, 205, 1);
+            box-shadow: 0 3px 10px rgba(139, 69, 19, 0.2);
+        }
+        
+        .service-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .service-checkbox {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+        
+        .service-details {
+            flex-grow: 1;
+        }
+        
+        .service-name {
+            font-weight: bold;
+            color: #8B4513;
+            font-size: 1.1em;
+        }
+        
+        .service-description {
+            color: #A0522D;
+            font-style: italic;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        
+        .service-price {
+            color: #8B4513;
+            font-weight: bold;
+            margin-left: 15px;
+            font-size: 1.1em;
+        }
+        
+        .service-quantity {
+            margin-left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .service-quantity input {
+            width: 70px;
+            padding: 5px;
+            margin: 0;
+        }
+        
+        /* Welcome message styling */
+        .guest-welcome {
+            background: rgba(255, 250, 205, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #DAA520;
+            text-align: center;
+        }
+        
+        .guest-welcome h3 {
+            color: #8B4513;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        
+        .checkout-btn {
+            background: #8B4513;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .checkout-btn:hover {
+            background: #A0522D;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Dragonfly Inn Header -->
+        <div class="inn-header">
+            <div class="dragonfly-logo"></div>
+            <div class="inn-title-section">
+                <h1>The Dragonfly Inn</h1>
+                <div class="inn-subtitle">"Room Reservations Made with Love & Coffee"</div>
+                <div class="location-tag">Stars Hollow, Connecticut</div>
+            </div>
+        </div>
+
+        <!-- Booking Form -->
+        <form id="bookingForm">
+            <div class="form-group">
+                <label>Check-in Date:</label>
+                <input type="date" id="checkinDate" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Check-out Date:</label>
+                <input type="date" id="checkoutDate" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Select Your Perfect Room:</label>
+                <select id="roomSelect" onchange="calculatePrice()">
+                    <option value="">-- Choose Your Stars Hollow Sanctuary --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Additional Dragonfly Services:</label>
+                <div id="servicesContainer">
+                    <p style="color: #A0522D; font-style: italic; text-align: center; padding: 20px;">
+                        Loading our amazing services... ☕
+                    </p>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Special Requests:</label>
+                <textarea id="specialRequest" rows="3" placeholder="Any special requests for your stay? We love making dreams come true!"></textarea>
+            </div>
+            
+            <div class="booking-summary" id="bookingSummary" style="display: none;">
+                <div id="summaryContent"></div>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <button type="button" onclick="createBooking()">🌟 Reserve Your Stay</button>
+                <button type="button" onclick="viewAnalytics()">📊 View Guest Analytics</button>
+                <button type="button" onclick="logout()" class="checkout-btn">Check Out of Inn</button>
+            </div>
+        </form>
+        
+        <div id="result"></div>
+        <div id="analytics"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let selectedCustomer = null;
+        let availableRooms = [];
+        let availableServices = [];
+
+        // Check if user is logged in
+        window.onload = function() {
+            const guestInfo = sessionStorage.getItem('dragonflyGuest');
+            if (!guestInfo) {
+                alert('Please check in at the front desk first!');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const guest = JSON.parse(guestInfo);
+            displayWelcomeMessage(guest);
+            
+            // Set the logged-in guest as the selected customer
+            selectedCustomer = {
+                CustomerID: guest.id,
+                Username: guest.username,
+                Email: guest.email,
+                Loyalty_status: guest.loyalty,
+                Points: guest.points
+            };
+            
+            // Load services and rooms
+            loadServices();
+            loadAvailableRooms();
+        };
+
+        function displayWelcomeMessage(guest) {
+            const welcomeDiv = document.createElement('div');
+            welcomeDiv.className = 'guest-welcome';
+            welcomeDiv.innerHTML = `
+                <h3>Welcome back to the Dragonfly Inn, ${guest.username}! 🦋</h3>
+                <p><strong>Loyalty Status:</strong> ${guest.loyalty} | <strong>Points:</strong> ${guest.points}</p>
+                <p style="font-style: italic; color: #A0522D;">"Every stay is a new adventure in Stars Hollow!"</p>
+            `;
+            document.querySelector('.container').insertBefore(welcomeDiv, document.querySelector('form'));
+        }
+
+        function logout() {
+            sessionStorage.removeItem('dragonflyGuest');
+            window.location.href = 'login.html';
+        }
+
+        function loadAvailableRooms() {
+            const checkin = document.getElementById('checkinDate').value;
+            const checkout = document.getElementById('checkoutDate').value;
+            
+            if (!checkin || !checkout) {
+                fetch(`${API_BASE}/rooms`)
+                .then(response => response.json())
+                .then(rooms => {
+                    populateRoomSelect(rooms);
+                })
+                .catch(error => {
+                    console.error('Error loading rooms:', error);
+                });
+                return;
+            }
+
+            fetch(`${API_BASE}/rooms/available?checkin=${checkin}&checkout=${checkout}`)
+            .then(response => response.json())
+            .then(rooms => {
+                populateRoomSelect(rooms);
+            })
+            .catch(error => {
+                console.error('Error checking availability:', error);
+            });
+        }
+
+        function populateRoomSelect(rooms) {
+            const select = document.getElementById('roomSelect');
+            select.innerHTML = '<option value="">-- Choose Your Stars Hollow Sanctuary --</option>';
+            
+            rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.RoomID;
+                option.textContent = `${room.Room_type} - €${room.Price}/night (${room.Capacity} guests)`;
+                option.dataset.price = room.Price;
+                select.appendChild(option);
+            });
+            availableRooms = rooms;
+        }
+
+        function loadServices() {
+            console.log('Loading services from:', `${API_BASE}/services`);
+            
+            fetch(`${API_BASE}/services`)
+            .then(response => {
+                console.log('Services response status:', response.status);
+                return response.json();
+            })
+            .then(services => {
+                console.log('Services data received:', services);
+                
+                const container = document.getElementById('servicesContainer');
+                if (!container) {
+                    console.error('servicesContainer element not found!');
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                if (services.length === 0) {
+                    container.innerHTML = '<p style="color: #A0522D; font-style: italic; text-align: center; padding: 20px;">No services available at the moment. Check with Lorelai at the front desk!</p>';
+                    return;
+                }
+                
+                services.forEach(service => {
+                    const serviceDiv = document.createElement('div');
+                    serviceDiv.className = 'service-item';
+                    serviceDiv.innerHTML = `
+                        <label class="service-label">
+                            <input type="checkbox" value="${service.ServiceID}" data-price="${service.Price_per_unit}" 
+                                   onchange="calculatePrice()" class="service-checkbox">
+                            <div class="service-details">
+                                <div class="service-name">${service.Label}</div>
+                                <div class="service-description">${service.Description || 'A delightful Stars Hollow experience'}</div>
+                            </div>
+                            <div class="service-price">€${service.Price_per_unit}</div>
+                            <div class="service-quantity">
+                                Qty: <input type="number" min="1" value="1" onchange="calculatePrice()">
+                            </div>
+                        </label>
+                    `;
+                    container.appendChild(serviceDiv);
+                });
+                availableServices = services;
+            })
+            .catch(error => {
+                console.error('Error loading services:', error);
+                document.getElementById('servicesContainer').innerHTML = 
+                    '<p style="color: #8B0000; text-align: center; padding: 20px;">Error loading services. Kirk probably unplugged something again!</p>';
+            });
+        }
+
+        function calculatePrice() {
+            const checkin = new Date(document.getElementById('checkinDate').value);
+            const checkout = new Date(document.getElementById('checkoutDate').value);
+            const roomSelect = document.getElementById('roomSelect');
+            
+            if (!checkin || !checkout || !roomSelect.value) {
+                document.getElementById('bookingSummary').style.display = 'none';
+                return;
+            }
+
+            const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+            const roomPrice = parseFloat(roomSelect.selectedOptions[0]?.dataset.price || 0);
+            let roomTotal = roomPrice * nights;
+
+            // Calculate services total
+            let servicesTotal = 0;
+            let selectedServices = [];
+            const serviceCheckboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]:checked');
+            
+            serviceCheckboxes.forEach(checkbox => {
+                const quantityInput = checkbox.closest('.service-item').querySelector('input[type="number"]');
+                const quantity = parseInt(quantityInput.value) || 1;
+                const servicePrice = parseFloat(checkbox.dataset.price);
+                const serviceName = checkbox.closest('.service-item').querySelector('.service-name').textContent;
+                
+                const serviceTotal = servicePrice * quantity;
+                servicesTotal += serviceTotal;
+                
+                selectedServices.push({
+                    name: serviceName,
+                    quantity: quantity,
+                    unitPrice: servicePrice,
+                    total: serviceTotal
+                });
+            });
+
+            const total = roomTotal + servicesTotal;
+            const loyaltyPoints = Math.floor(total / 10);
+            
+            // Calculate loyalty status progression
+            const currentPoints = selectedCustomer.Points || 0;
+            const pendingPoints = selectedCustomer.Pending_points || 0;
+            const futurePoints = currentPoints + pendingPoints + loyaltyPoints;
+            
+            // Determine loyalty tier and next tier
+            let currentTier = selectedCustomer.Loyalty_status || 'Classic';
+            let nextTier = '';
+            let pointsToNext = 0;
+            
+            if (futurePoints < 1000) {
+                nextTier = 'Silver';
+                pointsToNext = 1000 - futurePoints;
+            } else if (futurePoints < 2500) {
+                nextTier = 'Gold';
+                pointsToNext = 2500 - futurePoints;
+            } else if (futurePoints < 5000) {
+                nextTier = 'Diamond';
+                pointsToNext = 5000 - futurePoints;
+            } else {
+                nextTier = 'Stars Hollow Royalty';
+                pointsToNext = 0;
+            }
+
+            // Lorelai's quotes based on spending
+            let lorelaiQuote = '';
+            if (total < 100) {
+                lorelaiQuote = '"Coffee money well spent! Though maybe add breakfast?" - Lorelai';
+            } else if (total < 200) {
+                lorelaiQuote = '"Now we\'re talking! This is a proper Stars Hollow stay!" - Lorelai';
+            } else if (total < 300) {
+                lorelaiQuote = '"Wow, someone\'s treating themselves! I approve!" - Lorelai';
+            } else {
+                lorelaiQuote = '"Living the dream! Sookie will be so excited to cook for you!" - Lorelai';
+            }
+
+            // Build services summary
+            let servicesHtml = '';
+            if (selectedServices.length > 0) {
+                servicesHtml = '<div style="background: rgba(255,255,255,0.8); padding: 15px; border-radius: 8px; margin: 10px 0;"><strong>Selected Services:</strong><ul style="margin: 8px 0; padding-left: 20px;">';
+                selectedServices.forEach(service => {
+                    servicesHtml += `<li>${service.name} x${service.quantity} = €${service.total.toFixed(2)}</li>`;
+                });
+                servicesHtml += '</ul></div>';
+            }
+
+            // Loyalty progression display
+            let loyaltyHtml = `
+                <div style="background: rgba(218, 165, 32, 0.2); padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #DAA520;">
+                    <h4 style="margin: 0 0 10px 0; color: #8B4513;">🌟 Stars Hollow Loyalty Status</h4>
+                    <p><strong>Current Status:</strong> ${currentTier} (${currentPoints} points)</p>
+                    <p><strong>Pending Points:</strong> ${pendingPoints}</p>
+                    <p><strong>This Booking Points:</strong> +${loyaltyPoints} points</p>
+                    <p><strong>Total After Stay:</strong> ${futurePoints} points</p>
+            `;
+            
+            if (pointsToNext > 0) {
+                loyaltyHtml += `<p style="color: #A0522D;"><strong>Only ${pointsToNext} more points to reach ${nextTier}!</strong></p>`;
+            } else {
+                loyaltyHtml += `<p style="color: #228B22;"><strong>🎉 You've reached the highest tier!</strong></p>`;
+            }
+            
+            loyaltyHtml += '</div>';
+
+            document.getElementById('bookingSummary').style.display = 'block';
+            document.getElementById('summaryContent').innerHTML = `
+                <div style="background: rgba(255, 248, 240, 0.9); padding: 20px; border-radius: 10px;">
+                    <h3 style="color: #8B4513; margin-top: 0;">📋 Your Dragonfly Inn Reservation</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.8); padding: 15px; border-radius: 8px; margin: 10px 0;">
+                        <p><strong>Room:</strong> ${roomSelect.selectedOptions[0]?.textContent}</p>
+                        <p><strong>Duration:</strong> ${nights} magical night(s)</p>
+                        <p><strong>Room Total:</strong> €${roomTotal.toFixed(2)}</p>
+                    </div>
+                    
+                    ${servicesHtml}
+                    
+                    <div style="background: rgba(255,255,255,0.8); padding: 15px; border-radius: 8px; margin: 10px 0;">
+                        <p><strong>Services Total:</strong> €${servicesTotal.toFixed(2)}</p>
+                        <hr style="border: 1px solid #DEB887; margin: 10px 0;">
+                        <p style="font-size: 1.2em;"><strong>Grand Total:</strong> €${total.toFixed(2)}</p>
+                    </div>
+                    
+                    ${loyaltyHtml}
+                    
+                    <div style="background: rgba(139, 69, 19, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0; font-style: italic; text-align: center; color: #8B4513;">
+                        ${lorelaiQuote}
+                    </div>
+                </div>
+            `;
+        }
+
+        function createBooking() {
+            if (!selectedCustomer) {
+                alert('Session error. Please log in again.');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const checkin = document.getElementById('checkinDate').value;
+            const checkout = document.getElementById('checkoutDate').value;
+            const roomId = document.getElementById('roomSelect').value;
+            const specialRequest = document.getElementById('specialRequest').value;
+
+            if (!checkin || !checkout || !roomId) {
+                alert('Please fill in check-in date, check-out date, and select a room!');
+                return;
+            }
+
+            // Collect selected services with quantities
+            const services = [];
+            const serviceCheckboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]:checked');
+            serviceCheckboxes.forEach(checkbox => {
+                const quantityInput = checkbox.closest('.service-item').querySelector('input[type="number"]');
+                const quantity = parseInt(quantityInput.value) || 1;
+                services.push({
+                    serviceId: parseInt(checkbox.value),
+                    quantity: quantity
+                });
+            });
+
+            const bookingData = {
+                customerId: selectedCustomer.CustomerID,
+                checkinDate: checkin,
+                checkoutDate: checkout,
+                roomId: parseInt(roomId),
+                specialRequest: specialRequest,
+                services: services
+            };
+
+            fetch(`${API_BASE}/create-booking`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingData)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    let servicesText = '';
+                    if (services.length > 0) {
+                        servicesText = `<p><strong>Services booked:</strong> ${services.length} amazing service(s)</p>`;
+                    }
+                    
+                    // Calculate new loyalty status
+                    const newTotal = (selectedCustomer.Points || 0) + (result.newPendingPoints || 0);
+                    let newStatus = 'Classic';
+                    if (newTotal >= 5000) newStatus = 'Diamond';
+                    else if (newTotal >= 2500) newStatus = 'Gold';
+                    else if (newTotal >= 1000) newStatus = 'Silver';
+                    
+                    document.getElementById('result').innerHTML = `
+                        <div class="success" style="background: rgba(34, 139, 34, 0.1); padding: 25px; border-radius: 15px; border: 3px solid #228B22; margin: 20px 0;">
+                            <h3 style="color: #228B22; text-align: center;">✅ Welcome to the Dragonfly Inn Family!</h3>
+                            <div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                <p><strong>Booking Confirmation:</strong> #${result.bookingId}</p>
+                                <p><strong>Total Investment in Happiness:</strong> €${result.totalAmount}</p>
+                                <p><strong>Stars Hollow Points Earned:</strong> ${result.loyaltyPoints} points</p>
+                                ${servicesText}
+                            </div>
+                            <div style="background: rgba(218, 165, 32, 0.2); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                <p><strong>Your Loyalty Journey:</strong></p>
+                                <p>Total Pending Points: ${result.newPendingPoints}</p>
+                                <p>Projected Status: ${newStatus}</p>
+                            </div>
+                            <div style="font-style: italic; color: #8B4513; text-align: center; margin-top: 15px;">
+                                <p>"Can't wait to see you at the inn! We'll have the coffee ready!" 
+                                <br>- Lorelai & Sookie 💕</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Clear the form
+                    document.getElementById('bookingForm').reset();
+                    document.getElementById('bookingSummary').style.display = 'none';
+                    
+                    // Refresh services display
+                    loadServices();
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <div class="error" style="background: rgba(139, 0, 0, 0.1); padding: 20px; border-radius: 10px; border: 2px solid #8B0000;">
+                            ❌ Oops! ${result.message}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `
+                    <div class="error" style="background: rgba(139, 0, 0, 0.1); padding: 20px; border-radius: 10px; border: 2px solid #8B0000;">
+                        ❌ Connection error: ${error}
+                    </div>
+                `;
+            });
+        }
+
+        function viewAnalytics() {
+            fetch(`${API_BASE}/analytics/customer-loyalty`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '<div style="background: rgba(255, 248, 240, 0.95); padding: 25px; border-radius: 15px; margin: 20px 0; border: 3px solid #DEB887;"><h3 style="color: #8B4513;">📊 Stars Hollow Guest Analytics</h3>';
+                html += '<table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;"><tr style="background: #8B4513; color: white;"><th style="padding: 12px;">Guest</th><th>Email</th><th>Loyalty Status</th><th>Total Bookings</th><th>Total Spent</th><th>Current Points</th></tr>';
+                
+                data.forEach(customer => {
+                    html += `<tr style="border-bottom: 1px solid #DEB887;">
+                        <td style="padding: 10px;">${customer.Username}</td>
+                        <td style="padding: 10px;">${customer.Email}</td>
+                        <td style="padding: 10px; font-weight: bold; color: #8B4513;">${customer.Loyalty_status}</td>
+                        <td style="padding: 10px; text-align: center;">${customer.total_bookings}</td>
+                        <td style="padding: 10px; text-align: right;">€${customer.total_spent}</td>
+                        <td style="padding: 10px; text-align: center; font-weight: bold; color: #A0522D;">${customer.Points}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                html += '<div style="margin-top: 15px; font-style: italic; color: #8B4513; text-align: center;">"Every guest has a story, and every story matters!" - Lorelai</div></div>';
+                
+                document.getElementById('analytics').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('analytics').innerHTML = 
+                    '<div style="color: #8B0000; background: rgba(139, 0, 0, 0.1); padding: 20px; border-radius: 10px; margin: 20px 0;">Error loading analytics: ' + error + '</div>';
+            });
+        }
+
+        // Auto-calculate when dates change
+        document.getElementById('checkinDate').addEventListener('change', function() {
+            loadAvailableRooms();
+            calculatePrice();
+        });
+        document.getElementById('checkoutDate').addEventListener('change', function() {
+            loadAvailableRooms();
+            calculatePrice();
+        });
+    </script>
+</body>
+</html>

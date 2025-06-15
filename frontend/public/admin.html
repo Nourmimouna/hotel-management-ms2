@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management - Admin Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .admin-panel { background: #e8f4fd; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #007acc; }
+        button { 
+            background: #007acc; color: white; border: none; padding: 12px 24px; 
+            margin: 10px; border-radius: 4px; cursor: pointer; font-size: 16px; 
+        }
+        button:hover { background: #005999; }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f8f9fa; }
+
+
+
+	  /* Dragonfly logo styles */
+        .dragonfly-logo {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background-image: url('images/dragonfly-logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            vertical-align: middle;
+            margin-right: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .dragonfly-logo:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Header with dragonfly logo */
+        .inn-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        /* Small floating dragonfly in corner */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-image: url('images/dragonfly-logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 1000;
+            opacity: 0.6;
+            animation: flutter 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes flutter {
+            0%, 100% { transform: rotate(-3deg) scale(1); opacity: 0.6; }
+            50% { transform: rotate(3deg) scale(1.05); opacity: 0.8; }
+        }
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hotel Management System - Admin Panel</h1>
+        
+        <div class="admin-panel">
+            <h2>Database Management</h2>
+            <button onclick="importData()">🔄 Import Sample Data</button>
+            <button onclick="viewBookings()">📊 View All Bookings</button>
+            <button onclick="viewCustomers()">👥 View Customers</button>
+            <div id="status"></div>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+<!-- NoSQL Migration Panel -->
+        <div class="admin-panel">
+            <h2>🔄 NoSQL Database Migration</h2>
+            <p style="color: #8B4513; font-style: italic;">Transfer all data from MariaDB to MongoDB for NoSQL implementation</p>
+            
+            <div style="background: rgba(255, 250, 205, 0.9); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h3>Migration Status</h3>
+                <div id="nosqlStatus">Checking MongoDB status...</div>
+                <button onclick="checkNoSQLStatus()" style="background: #007acc; margin-top: 10px;">🔍 Check NoSQL Status</button>
+            </div>
+            
+            <div style="background: rgba(255, 240, 245, 0.9); padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #dc3545;">
+                <h3>⚠️ Migration Process</h3>
+                <p><strong>Warning:</strong> This will clear all existing MongoDB data and migrate fresh data from MariaDB.</p>
+                <ul style="text-align: left; color: #8B4513;">
+                    <li>✅ Preserves all semantic information from RDBMS</li>
+                    <li>🧹 Clears NoSQL collections before migration</li>
+                    <li>📊 Maintains data consistency and relationships</li>
+                    <li>⏱️ Process may take 30-60 seconds</li>
+                </ul>
+                <button onclick="startMigration()" style="background: #dc3545; color: white;">🚀 Start Migration to MongoDB</button>
+            </div>
+            
+            <div id="migrationProgress" style="display: none; background: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 8px; margin: 15px 0;">
+                <h3>Migration in Progress...</h3>
+                <div id="migrationStatus">Initializing migration...</div>
+                <div style="background: #e9ecef; height: 20px; border-radius: 10px; margin: 10px 0;">
+                    <div id="progressBar" style="background: #28a745; height: 100%; border-radius: 10px; width: 0%; transition: width 0.3s;"></div>
+                </div>
+            </div>
+            
+            <div id="migrationResult"></div>
+        </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function importData() {
+            document.getElementById('status').innerHTML = '<p>⏳ Importing data...</p>';
+            
+            fetch(`${API_BASE}/import-data`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('status').innerHTML = 
+                        '<p class="success">✅ Sample data imported successfully!</p>';
+                } else {
+                    document.getElementById('status').innerHTML = 
+                        '<p class="error">❌ Error: ' + data.message + '</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerHTML = 
+                    '<p class="error">❌ Connection error: ' + error + '</p>';
+            });
+        }
+        
+        function viewBookings() {
+            fetch(`${API_BASE}/bookings`)
+            .then(response => response.json())
+            .then(bookings => {
+                let html = '<h3>📋 Current Bookings</h3>';
+                html += '<table><tr><th>Booking ID</th><th>Customer ID</th><th>Room ID</th><th>Check-in</th><th>Check-out</th><th>Total Amount</th><th>Status</th></tr>';
+                bookings.forEach(booking => {
+                    html += `<tr>
+                        <td>${booking.BookingID}</td>
+                        <td>${booking.CustomerID}</td>
+                        <td>${booking.RoomID}</td>
+                        <td>${booking.Check_in_date}</td>
+                        <td>${booking.Check_out_date}</td>
+                        <td>€${booking.Total_amount}</td>
+                        <td>${booking.Status}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('results').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = '<p class="error">Error loading bookings: ' + error + '</p>';
+            });
+        }
+        
+        function viewCustomers() {
+            fetch(`${API_BASE}/customers`)
+            .then(response => response.json())
+            .then(customers => {
+                let html = '<h3>👥 Customers and Loyalty Status</h3>';
+                html += '<table><tr><th>Customer ID</th><th>Username</th><th>Email</th><th>Loyalty Status</th><th>Points</th><th>Pending Points</th></tr>';
+                customers.forEach(customer => {
+                    html += `<tr>
+                        <td>${customer.CustomerID}</td>
+                        <td>${customer.Username}</td>
+                        <td>${customer.Email}</td>
+                        <td>${customer.Loyalty_status}</td>
+                        <td>${customer.Points}</td>
+                        <td>${customer.Pending_points}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('results').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = '<p class="error">Error loading customers: ' + error + '</p>';
+            });
+        }
+
+		// NoSQL Migration Functions
+	function checkNoSQLStatus() {
+	    document.getElementById('nosqlStatus').innerHTML = '⏳ Checking MongoDB connection...';
+	    
+	    fetch(`${API_BASE}/nosql-status`)
+	    .then(response => response.json())
+	    .then(data => {
+	        if (data.success) {
+	            document.getElementById('nosqlStatus').innerHTML = `
+	                <div style="color: #28a745;">
+	                    <strong>✅ MongoDB Connected</strong><br>
+	                    Collections: ${data.collections.join(', ')}<br>
+	                    Documents: ${data.counts.customers} customers, ${data.counts.active_bookings} bookings, 
+	                    ${data.counts.rooms} rooms, ${data.counts.services} services<br>
+	                    <strong>Total: ${data.total_documents} documents</strong>
+	                </div>
+	            `;
+	        } else {
+	            document.getElementById('nosqlStatus').innerHTML = `
+	                <div style="color: #dc3545;">
+	                    <strong>❌ MongoDB Error</strong><br>
+	                    ${data.message}
+	                </div>
+	            `;
+	        }
+	    })
+	    .catch(error => {
+	        document.getElementById('nosqlStatus').innerHTML = `
+	            <div style="color: #dc3545;">
+	                <strong>❌ Connection Error</strong><br>
+	                ${error.message}
+	            </div>
+	        `;
+	    });
+	}
+
+	function startMigration() {
+	    if (!confirm('⚠️ This will clear all MongoDB data and migrate from MariaDB. Continue?')) {
+	        return;
+	    }
+	    
+	    // Show progress panel
+	    document.getElementById('migrationProgress').style.display = 'block';
+	    document.getElementById('migrationResult').innerHTML = '';
+	    
+	    // Simulate progress steps
+	    const steps = [
+	        'Connecting to databases...',
+	        'Clearing MongoDB collections...',
+	        'Migrating services...',
+	        'Migrating rooms...',
+	        'Migrating customers...',
+	        'Migrating active bookings...',
+	        'Creating indexes...',
+	        'Finalizing migration...'
+	    ];
+	    
+	    let currentStep = 0;
+	    const progressInterval = setInterval(() => {
+	        if (currentStep < steps.length) {
+	            document.getElementById('migrationStatus').textContent = steps[currentStep];
+	            document.getElementById('progressBar').style.width = ((currentStep + 1) / steps.length * 100) + '%';
+	            currentStep++;
+	        } else {
+	            clearInterval(progressInterval);
+	        }
+	    }, 1000);
+	    
+	    // Start actual migration
+	    fetch(`${API_BASE}/migrate-to-nosql`, {
+	        method: 'POST',
+	        headers: { 'Content-Type': 'application/json' }
+	    })
+	    .then(response => response.json())
+	    .then(result => {
+	        clearInterval(progressInterval);
+	        document.getElementById('migrationProgress').style.display = 'none';
+	        
+	        if (result.success) {
+	            document.getElementById('migrationResult').innerHTML = `
+	                <div style="background: rgba(40, 167, 69, 0.1); padding: 20px; border-radius: 8px; border: 2px solid #28a745;">
+	                    <h3 style="color: #28a745;">✅ Migration Completed Successfully!</h3>
+	                    <p><strong>All data has been successfully transferred from MariaDB to MongoDB.</strong></p>
+	                    <ul style="text-align: left; color: #28a745;">
+	                        <li>✅ Semantic information preserved</li>
+	                        <li>✅ Collections restructured for NoSQL optimization</li>
+	                        <li>✅ Indexes created for performance</li>
+	                        <li>✅ Data consistency maintained</li>
+	                    </ul>
+	                    <p style="font-style: italic;">"The Dragonfly Inn data is now available in both SQL and NoSQL formats!"</p>
+	                </div>
+	            `;
+	            
+	            // Refresh status
+	            setTimeout(() => {
+	                checkNoSQLStatus();
+	            }, 2000);
+	        } else {
+	            document.getElementById('migrationResult').innerHTML = `
+	                <div style="background: rgba(220, 53, 69, 0.1); padding: 20px; border-radius: 8px; border: 2px solid #dc3545;">
+	                    <h3 style="color: #dc3545;">❌ Migration Failed</h3>
+	                    <p><strong>Error:</strong> ${result.message}</p>
+	                    <p>Please check the backend logs and try again.</p>
+	                </div>
+	            `;
+	        }
+	    })
+	    .catch(error => {
+	        clearInterval(progressInterval);
+	        document.getElementById('migrationProgress').style.display = 'none';
+	        document.getElementById('migrationResult').innerHTML = `
+	            <div style="background: rgba(220, 53, 69, 0.1); padding: 20px; border-radius: 8px; border: 2px solid #dc3545;">
+	                <h3 style="color: #dc3545;">❌ Connection Error</h3>
+	                <p><strong>Error:</strong> ${error.message}</p>
+	                <p>Please check your backend connection.</p>
+	            </div>
+	        `;
+	    });
+	}
+
+	// Auto-check NoSQL status when page loads
+	window.addEventListener('load', function() {
+	    setTimeout(checkNoSQLStatus, 1000);
+	});	
+
+
+    </script>
+</body>
+</html>

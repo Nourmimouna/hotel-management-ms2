@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragonfly Inn - Guest Portal</title>
+    <style>
+        body { 
+            font-family: 'Georgia', serif; 
+            margin: 0; 
+            background: linear-gradient(135deg, #8B4513 0%, #DEB887 30%, #F5DEB3 100%); 
+            min-height: 100vh;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+
+
+		/* Dragonfly logo styles */
+	.dragonfly-logo {
+	    display: inline-block;
+	    width: 60px;
+	    height: 60px;
+	    background-image: url('images/dragonfly-logo.png');
+	    background-size: contain;
+	    background-repeat: no-repeat;
+	    background-position: center;
+	    vertical-align: middle;
+	    margin-right: 15px;
+	    transition: transform 0.3s ease;
+	}
+
+	.dragonfly-logo:hover {
+	    transform: scale(1.1) rotate(5deg);
+	}
+
+	/* Header with dragonfly logo */
+	.inn-header {
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	    margin-bottom: 30px;
+	}
+
+	.inn-header h1 {
+	    margin: 0;
+	    color: #8B4513;
+	    font-family: 'Georgia', serif;
+	}
+
+	/* Small floating dragonfly in corner */
+	body::before {
+	    content: "";
+	    position: fixed;
+	    top: 20px;
+	    right: 20px;
+	    width: 40px;
+	    height: 40px;
+	    background-image: url('images/dragonfly-logo.png');
+	    background-size: contain;
+	    background-repeat: no-repeat;
+	    z-index: 1000;
+	    opacity: 0.6;
+	    animation: flutter 4s ease-in-out infinite;
+	    pointer-events: none;
+	}
+
+	@keyframes flutter {
+	    0%, 100% { transform: rotate(-3deg) scale(1); opacity: 0.6; }
+	    50% { transform: rotate(3deg) scale(1.05); opacity: 0.8; }
+	}
+
+
+        .container { 
+            max-width: 450px; 
+            margin: 0 auto; 
+            padding: 50px 20px; 
+            text-align: center; 
+        }
+        .login-card { 
+            background: rgba(255, 248, 240, 0.95); 
+            padding: 40px; 
+            border-radius: 15px; 
+            box-shadow: 0 15px 35px rgba(139, 69, 19, 0.3);
+            border: 3px solid #DEB887;
+            backdrop-filter: blur(10px);
+        }
+        .inn-logo { 
+            font-size: 2.8em; 
+            color: #8B4513; 
+            margin-bottom: 10px; 
+            font-family: 'Georgia', serif;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .tagline { 
+            color: #A0522D; 
+            font-style: italic; 
+            margin-bottom: 30px; 
+            font-size: 1.1em;
+        }
+        .form-group { 
+            margin: 20px 0; 
+            text-align: left; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #8B4513;
+            font-family: 'Georgia', serif;
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #DEB887; 
+            border-radius: 8px; 
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            box-sizing: border-box;
+        }
+        input:focus { 
+            border-color: #CD853F; 
+            outline: none; 
+            background: white;
+            box-shadow: 0 0 10px rgba(205, 133, 63, 0.3);
+        }
+        .btn-dragonfly { 
+            background: linear-gradient(45deg, #8B4513, #A0522D); 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: bold;
+            margin: 10px 5px;
+            font-family: 'Georgia', serif;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-dragonfly:hover { 
+            background: linear-gradient(45deg, #A0522D, #8B4513); 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.4);
+        }
+        .stars-hollow-note { 
+            background: rgba(255, 250, 205, 0.9); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border-left: 4px solid #DAA520;
+            font-style: italic;
+            color: #8B4513;
+        }
+        .customer-select { 
+            background: rgba(255, 250, 205, 0.9); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0; 
+            border: 2px solid #DAA520;
+        }
+        .success { color: #228B22; font-weight: bold; }
+        .error { color: #8B0000; font-weight: bold; }
+        .footer-quote {
+            margin-top: 30px;
+            font-style: italic;
+            color: #8B4513;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="inn-logo">The Dragonfly Inn</div>
+            <div class="tagline">"Where every guest feels like family"</div>
+            <div class="tagline" style="font-size: 0.9em; margin-bottom: 30px;">Est. Stars Hollow, Connecticut</div>
+            
+            <div class="stars-hollow-note">
+                <strong>Welcome to Lorelai's Dream!</strong><br>
+                Please select your guest profile to continue your stay with us.
+            </div>
+
+        	<!-- Guest Login -->
+	   <div style="margin: 20px 0; color: #8B4513; text-align: center;">
+		 <strong>Please sign in with your guest credentials:</strong>
+	   </div>            
+	            <!-- Alternative Manual Login -->
+            <div style="margin: 20px 0; color: #8B4513;">
+                <small>Or sign in with your credentials:</small>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address:</label>
+                    <input type="email" id="email" placeholder="your.email@starshollow.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" placeholder="Your secure password" required>
+                </div>
+                
+                <button type="button" class="btn-dragonfly" onclick="authenticateGuest()">Check Into Dragonfly</button>
+            </form>
+            
+            <div id="loginStatus"></div>
+            
+            <div class="footer-quote">
+                "I smell snow... and fresh coffee brewing in the kitchen"<br>
+                - Lorelai Gilmore
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let selectedGuest = null;
+
+        
+        
+	        
+	        function authenticateGuest() {
+	    const email = document.getElementById('email').value;
+	    const password = document.getElementById('password').value;
+	    
+	    if (!email || !password) {
+	        document.getElementById('loginStatus').innerHTML = 
+	            '<div class="error">Please fill in all fields, just like Lorelai would want!</div>';
+	        return;
+	    }
+	    
+	    // Simple authentication simulation
+	    fetch(`${API_BASE}/customers`)
+	    .then(response => response.json())
+	    .then(guests => {
+	        const matchedGuest = guests.find(guest => 
+	            guest.Email.toLowerCase() === email.toLowerCase()
+	        );
+	        
+	        if (matchedGuest) {
+	            // In real app, you'd verify password on backend
+	            // For demo purposes, we'll accept any password for existing emails
+	            const selectedGuest = {
+	                id: matchedGuest.CustomerID,
+	                username: matchedGuest.Username,
+	                email: matchedGuest.Email,
+	                loyalty: matchedGuest.Loyalty_status,
+	                points: matchedGuest.Points
+	            };
+	            
+	            sessionStorage.setItem('dragonflyGuest', JSON.stringify(selectedGuest));
+	            
+	            document.getElementById('loginStatus').innerHTML = 
+	                '<div class="success">✅ Welcome to the Dragonfly Inn! Redirecting you to our booking system...</div>';
+	            
+	            setTimeout(() => {
+	                window.location.href = 'booking.html';
+	            }, 2000);
+	        } else {
+	            document.getElementById('loginStatus').innerHTML = 
+	                '<div class="error">Guest not found. Please check with Sookie in the kitchen... I mean, front desk!</div>';
+	        }
+	    })
+	    .catch(error => {
+	        document.getElementById('loginStatus').innerHTML = 
+	            '<div class="error">Connection error. Kirk probably unplugged something again!</div>';
+	    });
+	}
+    </script>
+</body>
+</html>
